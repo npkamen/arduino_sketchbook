@@ -66,6 +66,7 @@ void loop()
   //if(((currentTm - lastPrintTm) > 10000) || (msgRec))
   if(Serial.available() > 0)
   {
+    char cmd=Serial.read();
     msgRec=false;
   
     if(lastMsgTm==0)
@@ -74,7 +75,7 @@ void loop()
     }
     else
     {
-      if (Serial.read() == char('s'))
+      if (cmd == char('s'))
       {
         
         Serial.print("Status - Level:");
@@ -91,7 +92,7 @@ void loop()
         Serial.print((currentTm-lastMsgTm)/1000);
         Serial.println("s ago.");
       }
-      else
+      else if (cmd == char('c'))
       {
         Serial.print("Level:");
         Serial.print(tankpv);
