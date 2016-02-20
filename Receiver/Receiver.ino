@@ -13,6 +13,7 @@ byte RX_lqi=0;
 byte size,i,flag;
 
 float battv=0.0;
+float tankpv=0.0;
 long lastMsgTm=0;
 long lastPrintTm=0;
 long currentTm=0;
@@ -29,15 +30,7 @@ void loop()
   {
     msgRec=true;
     size=ELECHOUSE_cc1101.ReceiveData(RX_buffer, RX_rssi, RX_lqi);
-    //Serial.print("RawRX: ");
-    //for(i=0;i<size;i++)
-    //{
-    //  Serial.print(RX_buffer[i],DEC);
-    //  Serial.print(' ');
-    //}
-    
-    //Serial.println("");
-    
+
     //convert RSSI to actual figure
     if(RX_rssi>=128)
     {
@@ -47,6 +40,17 @@ void loop()
     {
       rssi=(RX_rssi/2)-74;
     }
+
+    //convert incoming cm reading to float %
+    tankpv = (257.0 - float(RX_buffer[1]*256 + RX_buffer[2]) + 20.0) / 257.0 * 100.0;
+    if (tankpv < 0.0)
+    {
+     tankpv = 0.0;
+    }
+    else if (tankpv > 100.0)
+    {
+     tankpv = 100.0;
+  }
 
     //scale LQI to 0-100% quality figure
     quality=(100 - ((RX_lqi - 128)/128*100));
@@ -74,7 +78,7 @@ void loop()
       {
         
         Serial.print("Status - Level:");
-        Serial.print(RX_buffer[3]);
+        Serial.print(tankpv);
         Serial.print("% Sensor Distance:");
         Serial.print(RX_buffer[1]*256 + RX_buffer[2]);
         Serial.print("cm Signal:");
@@ -90,7 +94,7 @@ void loop()
       else
       {
         Serial.print("Level:");
-        Serial.print(RX_buffer[3]);
+        Serial.print(tankpv);
         Serial.print(" RSSI:");
         Serial.print(rssi);
         Serial.print(" Quality:");
