@@ -42,7 +42,7 @@ void loop()
     }
 
     //convert incoming cm reading to float %
-    tankpv = (257.0 - float(RX_buffer[1]*256 + RX_buffer[2]) + 20.0) / 257.0 * 100.0;
+    tankpv = (257.0 - float(RX_buffer[1]*256 + RX_buffer[2])) / 237.0 * 100.0;
     if (tankpv < 0.0)
     {
      tankpv = 0.0;
@@ -63,7 +63,6 @@ void loop()
     lastMsgTm=currentTm;
   }
   
-  //if(((currentTm - lastPrintTm) > 10000) || (msgRec))
   if(Serial.available() > 0)
   {
     char cmd=Serial.read();
@@ -72,6 +71,10 @@ void loop()
     if(lastMsgTm==0)
     {
       Serial.println("Waiting for first data message...");
+    }
+    else if (((currentTm-lastMsgTm)/1000) > 300)
+    {
+      Serial.println("Comms Failure with Sensor");
     }
     else
     {
@@ -105,9 +108,8 @@ void loop()
         Serial.println("");
       }
     }
-    lastPrintTm = millis();
     
-    //Clear serial buffer if something new comes in
+    //Clear serial buffer if something new comes in during serial transfer of data
     while(Serial.available() > 0)
     {
       char t = Serial.read();
