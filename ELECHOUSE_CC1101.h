@@ -13,7 +13,7 @@
 #ifndef ELECHOUSE_CC1101_h
 #define ELECHOUSE_CC1101_h
 
-#include "WProgram.h"
+#include "Arduino.h"
 //***************************************CC1101 define**************************************************//
 // CC1101 CONFIG REGSITER
 #define CC1101_IOCFG2       0x00        // GDO2 output pin configuration
@@ -134,7 +134,7 @@ class ELECHOUSE_CC1101
 		void SendData(byte *txBuffer, byte size);
 		void SetReceive(void);
 		byte CheckReceiveFlag(void);
-		byte ReceiveData(byte *rxBuffer);
+		byte ReceiveData(byte *rxBuffer, byte &stat_rssi, byte &stat_lqi);
 };
 
 extern ELECHOUSE_CC1101 ELECHOUSE_cc1101;

@@ -11,7 +11,7 @@
 	For the details, please refer to the datasheet of CC1100/CC1101.
 */
 #include <ELECHOUSE_CC1101.h>
-#include <WProgram.h>
+#include <Arduino.h>
 
 /****************************************************************/
 #define 	WRITE_BURST     	0x40						//write burst
@@ -78,7 +78,13 @@ byte ELECHOUSE_CC1101::SpiTransfer(byte value)
 *FUNCTION     : set GDO0,GDO2 pin
 *INPUT        : none
 *OUTPUT       : none
-****************************************************************/
+****************************************************************///    status=ELECHOUSE_cc1101.ReceiveData(RX_status);
+//    for(j=0;j<size;j++)
+//    {
+//      Serial.print(RX_buffer[j],DEC);
+//      Serial.print(' ');
+//    }    Serial.print(RX_buffer,HEX);
+//    Serial.print(ELECHOUSE_cc1101.ReceiveData(RX_buffer));
 void ELECHOUSE_CC1101::GDO_Set (void)
 {
 	pinMode(GDO0, INPUT);
@@ -95,7 +101,13 @@ void ELECHOUSE_CC1101::Reset (void)
 {
 	digitalWrite(SS_PIN, LOW);
 	delay(1);
-	digitalWrite(SS_PIN, HIGH);
+	digitalWrite(SS_PIN, HIGH);//    status=ELECHOUSE_cc1101.ReceiveData(RX_status);
+//    for(j=0;j<size;j++)
+//    {
+//      Serial.print(RX_buffer[j],DEC);
+//      Serial.print(' ');
+//    }    Serial.print(RX_buffer,HEX);
+//    Serial.print(ELECHOUSE_cc1101.ReceiveData(RX_buffer));
 	delay(1);
 	digitalWrite(SS_PIN, LOW);
 	while(digitalRead(MISO_PIN));
@@ -247,8 +259,8 @@ void ELECHOUSE_CC1101::RegConfigSettings(void)
     SpiWriteReg(CC1101_FREQ2,    0x10);
     SpiWriteReg(CC1101_FREQ1,    0xA7);
     SpiWriteReg(CC1101_FREQ0,    0x62);
-    SpiWriteReg(CC1101_MDMCFG4,  0x5B);
-    SpiWriteReg(CC1101_MDMCFG3,  0xF8);
+    SpiWriteReg(CC1101_MDMCFG4,  0x55);
+    SpiWriteReg(CC1101_MDMCFG3,  0x84);
     SpiWriteReg(CC1101_MDMCFG2,  0x03);
     SpiWriteReg(CC1101_MDMCFG1,  0x22);
     SpiWriteReg(CC1101_MDMCFG0,  0xF8);
@@ -260,11 +272,11 @@ void ELECHOUSE_CC1101::RegConfigSettings(void)
     SpiWriteReg(CC1101_FOCCFG,   0x1D);
     SpiWriteReg(CC1101_BSCFG,    0x1C);
     SpiWriteReg(CC1101_AGCCTRL2, 0xC7);
-	SpiWriteReg(CC1101_AGCCTRL1, 0x00);
+    SpiWriteReg(CC1101_AGCCTRL1, 0x00);
     SpiWriteReg(CC1101_AGCCTRL0, 0xB2);
     SpiWriteReg(CC1101_FSCAL3,   0xEA);
-	SpiWriteReg(CC1101_FSCAL2,   0x2A);
-	SpiWriteReg(CC1101_FSCAL1,   0x00);
+    SpiWriteReg(CC1101_FSCAL2,   0x2A);
+    SpiWriteReg(CC1101_FSCAL1,   0x00);
     SpiWriteReg(CC1101_FSCAL0,   0x11);
     SpiWriteReg(CC1101_FSTEST,   0x59);
     SpiWriteReg(CC1101_TEST2,    0x81);
@@ -272,8 +284,8 @@ void ELECHOUSE_CC1101::RegConfigSettings(void)
     SpiWriteReg(CC1101_TEST0,    0x09);
     SpiWriteReg(CC1101_IOCFG2,   0x0B); 	//serial clock.synchronous to the data in synchronous serial mode
     SpiWriteReg(CC1101_IOCFG0,   0x06);  	//asserts when sync word has been sent/received, and de-asserts at the end of the packet 
-    SpiWriteReg(CC1101_PKTCTRL1, 0x04);		//two status bytes will be appended to the payload of the packet,including RSSI LQI and CRC OK
-											//No address check
+    SpiWriteReg(CC1101_PKTCTRL1, 0x04);		//lvlptwo status bytes will be appended to the payload of the packet,including RSSI LQI and CRC OK
+						//No address check
     SpiWriteReg(CC1101_PKTCTRL0, 0x05);		//whitening off;CRC Enable£»variable length packets, packet length configured by the first byte after sync word
     SpiWriteReg(CC1101_ADDR,     0x00);		//address used for packet filtration.
     SpiWriteReg(CC1101_PKTLEN,   0x3D); 	//61 bytes max length
@@ -283,7 +295,9 @@ void ELECHOUSE_CC1101::RegConfigSettings(void)
 *FUNCTION NAME:SendData
 *FUNCTION     :use CC1101 send data
 *INPUT        :txBuffer: data array to send; size: number of data to send, no more than 61
-*OUTPUT       :none
+*OUTPUT       :none    Serial.print(RX_status[0],DEC);
+    Serial.print(' ');
+    Serial.print(RX_status[1],DEC);
 ****************************************************************/
 void ELECHOUSE_CC1101::SendData(byte *txBuffer,byte size)
 {
@@ -332,7 +346,7 @@ byte ELECHOUSE_CC1101::CheckReceiveFlag(void)
 *INPUT        :rxBuffer: buffer to store data
 *OUTPUT       :size of data received
 ****************************************************************/
-byte ELECHOUSE_CC1101::ReceiveData(byte *rxBuffer)
+byte ELECHOUSE_CC1101::ReceiveData(byte *rxBuffer, byte &stat_rssi, byte &stat_lqi)
 {
 	byte size;
 	byte status[2];
@@ -342,6 +356,8 @@ byte ELECHOUSE_CC1101::ReceiveData(byte *rxBuffer)
 		size=SpiReadReg(CC1101_RXFIFO);
 		SpiReadBurstReg(CC1101_RXFIFO,rxBuffer,size);
 		SpiReadBurstReg(CC1101_RXFIFO,status,2);
+		stat_rssi=status[0];
+		stat_lqi=status[1];
 		SpiStrobe(CC1101_SFRX);
 		return size;
 	}
