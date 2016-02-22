@@ -14,6 +14,7 @@ byte size,i,flag;
 
 float battv=0.0;
 float tankpv=0.0;
+int tankcm=0;
 long lastMsgTm=0;
 long lastPrintTm=0;
 long currentTm=0;
@@ -41,8 +42,15 @@ void loop()
       rssi=(RX_rssi/2)-74;
     }
 
+    //condition tank level in cm coming back from tank sensor
+    tankcm = RX_buffer[1]*256+RX_buffer[2];
+    if (tankcm < 20)
+    {
+      tankcm = 20;
+    }
+
     //convert incoming cm reading to float %
-    tankpv = (257.0 - float(RX_buffer[1]*256 + RX_buffer[2])) / 237.0 * 100.0;
+    tankpv = float(237 - tankcm - 20) / 237.0 * 100.0;
     if (tankpv < 0.0)
     {
      tankpv = 0.0;
