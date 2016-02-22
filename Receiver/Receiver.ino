@@ -50,7 +50,7 @@ void loop()
     }
 
     //convert incoming cm reading to float %
-    tankpv = float(237 - tankcm - 20) / 237.0 * 100.0;
+    tankpv = float(257 - tankcm) / 237.0 * 100.0;
     if (tankpv < 0.0)
     {
      tankpv = 0.0;
