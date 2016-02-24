@@ -5,9 +5,9 @@
 #define ECHO_PIN     5  // Arduino pin tied to echo pin on the ultrasonic sensor.
 
 //Set up sensor distance parameters
-#define MAX_DISTANCE 300
-#define TANK_HEIGHT 257.0
-#define MIN_DISTANCE 20.0
+#define MAX_DISTANCE 300 //Distance for sensor to give up read if no response received by
+#define TANK_HEIGHT 257 //Distance from sensor face to bottom of tank
+#define MIN_DISTANCE 20 //Distance from sensor face to minimum measurement distance
 
 #define size 6
 
@@ -28,7 +28,7 @@ void loop()
   //Ping and condition tank level
   int uS = sonar.ping_median(30);
   int dist = uS / US_ROUNDTRIP_CM;
-  float lvlpf = (TANK_HEIGHT - dist + MIN_DISTANCE) / TANK_HEIGHT * 100.0;
+  float lvlpf = float(TANK_HEIGHT - dist) / float(TANK_HEIGHT - MIN_DISTANCE) * 100.0;
 
   if (lvlpf < 0.0) {
     lvlpf = 0.0;
@@ -36,7 +36,8 @@ void loop()
   else if (lvlpf > 100.0) {
     lvlpf = 100.0;
   }
-  int lvlp = lvlpf; 
+  
+  byte lvlp = lvlpf; 
   
   battv=readVcc();
   
