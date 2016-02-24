@@ -18,7 +18,7 @@ int tankcm=0;
 long lastMsgTm=0;
 long lastPrintTm=0;
 long currentTm=0;
-int rssi=0;
+float rssi=0;
 int quality=0;
 boolean msgRec=false;
 
@@ -35,11 +35,11 @@ void loop()
     //convert RSSI to actual figure
     if(RX_rssi>=128)
     {
-      rssi=(RX_rssi-256)/2-74;
+      rssi=(float(RX_rssi-256)/2.0)-74.0;
     }
     else
     {
-      rssi=(RX_rssi/2)-74;
+      rssi=(float(RX_rssi)/2.0)-74.0;
     }
 
     //condition tank level in cm coming back from tank sensor
