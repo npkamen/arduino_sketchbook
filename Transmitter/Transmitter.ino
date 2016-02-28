@@ -7,7 +7,7 @@
 //Set up sensor distance parameters
 #define MAX_DISTANCE 300 //Distance for sensor to give up read if no response received by
 #define TANK_HEIGHT 257 //Distance from sensor face to bottom of tank
-#define MIN_DISTANCE 20 //Distance from sensor face to minimum measurement distance
+#define MIN_DISTANCE 30 //Distance from sensor face to minimum measurement distance
 
 #define size 6
 
