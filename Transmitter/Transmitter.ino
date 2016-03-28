@@ -66,7 +66,7 @@ void loop()
   
   //Wait for 60s before re-sampling and sending again
   //delay(5000);
-  Sleepy::loseSomeTime(5000);
+  Sleepy::loseSomeTime(60000);
 }
 
 long readVcc() {
