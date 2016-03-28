@@ -1,5 +1,6 @@
 #include <ELECHOUSE_CC1101.h>
 #include <NewPing.h>
+#include <JeeLib.h> // Low power functions library
 
 #define TRIGGER_PIN  6  // Arduino pin tied to trigger pin on the ultrasonic sensor.
 #define ECHO_PIN     5  // Arduino pin tied to echo pin on the ultrasonic sensor.
@@ -17,9 +18,12 @@ int battv=0;
 
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
 
+ISR(WDT_vect) { Sleepy::watchdogEvent(); } // Setup the watchdog
+
+
 void setup()
 {
-  //Serial.begin(9600);
+  Serial.begin(9600);
   ELECHOUSE_cc1101.Init();
  }
 
@@ -61,7 +65,8 @@ void loop()
   i++;
   
   //Wait for 60s before re-sampling and sending again
-  delay(60000);
+  //delay(5000);
+  Sleepy::loseSomeTime(5000);
 }
 
 long readVcc() {
