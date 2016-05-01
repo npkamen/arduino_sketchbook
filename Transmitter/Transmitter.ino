@@ -16,6 +16,8 @@ byte TX_buffer[size]={0};
 int i=0;
 int battv=0;
 
+int lvlpwrPin = 4;
+
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
 
 ISR(WDT_vect) { Sleepy::watchdogEvent(); } // Setup the watchdog
@@ -25,12 +27,18 @@ void setup()
 {
   Serial.begin(9600);
   ELECHOUSE_cc1101.Init();
+  pinMode(lvlpwrPin, OUTPUT);
  }
 
 void loop()
 {
   //Ping and condition tank level
+  digitalWrite(lvlpwrPin, HIGH);
+  delay(1000);
   int uS = sonar.ping_median(30);
+  
+  digitalWrite(lvlpwrPin, LOW);
+  
   int dist = uS / US_ROUNDTRIP_CM;
   float lvlpf = float(TANK_HEIGHT - dist) / float(TANK_HEIGHT - MIN_DISTANCE) * 100.0;
 
@@ -63,6 +71,8 @@ void loop()
   ELECHOUSE_cc1101.SendData(TX_buffer,size);
   
   i++;
+  
+  delay(1000);
   
   //Wait for 60s before re-sampling and sending again
   //delay(5000);
