@@ -60,6 +60,7 @@ long startTime = millis();
 long upTime;
 long currentTime;
 long lastUpdateTime;
+long lastMessageTime;
 
 void setup()   {                
   Serial.begin(9600);
@@ -97,6 +98,7 @@ void loop() {
   
   if(Serial.available() > 0)
   {
+    lastMessageTime = currentTime;
     char cmd=Serial.read();
     
     int newBars = int(cmd)-48;
@@ -124,7 +126,9 @@ void loop() {
     display.setTextSize(1);
     display.setTextColor(WHITE);
     display.setCursor(0,56);
-    display.println(upTime);
+    display.print(upTime);
+    display.print(' ');
+    display.print((currentTime - lastMessageTime)/1000);
     updateDisplay = false;
     lastUpdateTime = currentTime;
     display.display();
@@ -138,6 +142,7 @@ void displaySignal(int numBars) {
   // Display signal symbol
   display.drawTriangle(0,0,8,0,4,4,1);
   display.fillRect(4,5,1,5,1);
+  if (numBars < 1) { display.drawCircle(10,6,3,1); display.drawLine(8,8,12,4,1);}
   if (numBars >= 1) { display.fillRect(6,8,1,2,1); }
   if (numBars >= 2) { display.fillRect(8,6,1,4,1); }
   if (numBars >= 3) { display.fillRect(10,4,1,6,1); }
