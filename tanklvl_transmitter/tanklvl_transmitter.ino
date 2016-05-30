@@ -36,11 +36,11 @@ void loop()
   digitalWrite(lvlpwrPin, HIGH);
   delay(1000);
   int uS = sonar.ping_median(30);
-  
+  battv=readVcc();  
   digitalWrite(lvlpwrPin, LOW);
   
-  int dist = uS / US_ROUNDTRIP_CM;
-  float lvlpf = float(TANK_HEIGHT - dist) / float(TANK_HEIGHT - MIN_DISTANCE) * 100.0;
+  float dist = uS / US_ROUNDTRIP_CM;
+  float lvlpf = (float(TANK_HEIGHT) - dist)) / float(TANK_HEIGHT - MIN_DISTANCE) * 100.0;
 
   if (lvlpf < 0.0) {
     lvlpf = 0.0;
@@ -51,8 +51,6 @@ void loop()
   
   byte lvlp = lvlpf; 
   
-  battv=readVcc();
-  
   Serial.print(lvlp);
   Serial.print(' ');
   Serial.print(highByte(battv));
@@ -61,8 +59,8 @@ void loop()
   
   //Map data to array to be transmitted
   TX_buffer[0]=i;
-  TX_buffer[1]=highByte(dist);
-  TX_buffer[2]=lowByte(dist);
+  TX_buffer[1]=highByte(int(dist));
+  TX_buffer[2]=lowByte(int(dist));
   TX_buffer[3]=lvlp;
   TX_buffer[4]=highByte(battv);
   TX_buffer[5]=lowByte(battv);
