@@ -18,3 +18,8 @@ This is my Arduino sketchbook committed to github.  I may move it away from here
 * Modified ELECHOUSE_CC1101 library
  * Added RSSI and LQI outputs from ReceiveData function
  * Modified baud rate to 1200bps to increase sensitivity of receiver
+
+## Future Ideas
+* Add receive by interrupt to transmitter code to allow adjustment of transmission rates and possible store/forward functionality
+* Add device IDs and routing table functionality
+* Expand receiver to support OLED display with buttons to force poll
