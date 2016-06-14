@@ -8,16 +8,14 @@
 #define PWR_PIN     4  // Arduino pin used to switch on level sensor (to save power when not in use).
 
 //Set up sensor distance parameters
-#define MAX_DISTANCE 300 //Distance for sensor to give up read if no response received by
-#define TANK_HEIGHT 257 //Distance from sensor face to bottom of tank
-#define MIN_DISTANCE 30 //Distance from sensor face to minimum measurement distance
+#define MAX_DISTANCE 300 //Distance for sensor to give up read if no response received (cm)
+#define TANK_HEIGHT 257 //Distance from sensor face to bottom of tank (cm)
+#define MIN_DISTANCE 30 //Distance from sensor face to minimum measurement distance (cm)
 
-#define size 6
-
-byte TX_buffer[size]={0};
-
-int battv=0;
-long uS;
+//Set up transmit parameters
+#define TX_SIZE 61
+#define TX_ADDR 10
+byte TX_buffer[TX_SIZE]={0};
 
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
 
@@ -36,49 +34,51 @@ void loop()
   //Ping and condition tank level
     Serial.println("Powering up level sensor");
   digitalWrite(PWR_PIN, HIGH);
-    Serial.println("Waiting for sensor to stabilise");
-  delay(1000);
+    Serial.println("Waiting 1s for sensor to stabilise");
+  Sleepy::loseSomeTime(1000);
     Serial.println("Sensor warmup complete, reading value....");
-  uS = sonar.ping_median(30);
-    Serial.print("Sensor value is ");
+  long uS = sonar.ping_median(30);
+    Serial.print("Sensor ping time is ");
     Serial.print(uS);
     Serial.println("uS.")
   //Read battery volts straight after ping to see if there is any voltage drop
     Serial.println("Reading Battery Volts....");
-  battv=readVcc();
+  int battv=readVcc();
     Serial.print("Battery Volts is ");
     Serial.print(battv);
     Serial.println("mV.");
     Serial.println("Switching level sensor off.");
   digitalWrite(PWR_PIN, LOW);
   
-  long dist = (float(uS) / float(US_ROUNDTRIP_CM)) * 100.0;
-  int lvlpf = (float(TANK_HEIGHT) - dist)) / float(TANK_HEIGHT - MIN_DISTANCE) * 100.0;
+  long dist = (float(uS) / float(US_ROUNDTRIP_CM)) * 10.0; //store distance in mm
+    Serial.print("Sensor distance is ");
+    Serial.print(dist);
+    Serial.println("mm.");
+  int lvlp = float((TANK_HEIGHT*10) - dist) / float((TANK_HEIGHT*10) - (MIN_DISTANCE*10)) * 100.0; //Pack level into integer with 2dp
+    Serial.print("Tank level is ");
+    Serial.print(float(lvlp)/100.0,2); //Scale the level for serial print
+    Serial.println("%.");
 
-  if (lvlpf < 0.0) {
-    lvlpf = 0.0;
+  if (lvlp < 0) {
+    lvlp = 0;
   }
-  else if (lvlpf > 100.0) {
-    lvlpf = 100.0;
+  else if (lvlp > 10000) {
+    lvlp = 10000;
   }
-  
-  byte lvlp = lvlpf; 
 
   //Map data to array to be transmitted
-  TX_buffer[0]=10;
-  TX_buffer[1]=highByte(int(dist));
-  TX_buffer[2]=lowByte(int(dist));
-  TX_buffer[3]=lvlp;
-  TX_buffer[4]=highByte(battv);
-  TX_buffer[5]=lowByte(battv);
+  TX_buffer[0]=TX_ADDR;
+  TX_buffer[1]=highByte(dist);
+  TX_buffer[2]=lowByte(dist);
+  TX_buffer[3]=highByte(lvlp);
+  TX_buffer[4]=lowByte(lvlp);
+  TX_buffer[5]=highByte(battv);
+  TX_buffer[6]=lowByte(battv);
   
   //Send data
-  ELECHOUSE_cc1101.SendData(TX_buffer,size);
-  
-  delay(1000);
+  ELECHOUSE_cc1101.SendData(TX_buffer,TX_SIZE);
   
   //Wait for 60s before re-sampling and sending again
-  //delay(5000);
   Sleepy::loseSomeTime(60000);
 }
 
