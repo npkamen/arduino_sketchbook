@@ -2,8 +2,10 @@
 #include <NewPing.h>
 #include <JeeLib.h> // Low power functions library
 
-#define TRIGGER_PIN  6  // Arduino pin tied to trigger pin on the ultrasonic sensor.
-#define ECHO_PIN     5  // Arduino pin tied to echo pin on the ultrasonic sensor.
+//Set up ultrasonic connection details
+#define TRIGGER_PIN 6  // Arduino pin tied to trigger pin on the ultrasonic sensor.
+#define ECHO_PIN    5  // Arduino pin tied to echo pin on the ultrasonic sensor.
+#define PWR_PIN     4  // Arduino pin used to switch on level sensor (to save power when not in use).
 
 //Set up sensor distance parameters
 #define MAX_DISTANCE 300 //Distance for sensor to give up read if no response received by
@@ -13,10 +15,9 @@
 #define size 6
 
 byte TX_buffer[size]={0};
-int i=0;
-int battv=0;
 
-int lvlpwrPin = 4;
+int battv=0;
+long uS;
 
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
 
@@ -27,20 +28,32 @@ void setup()
 {
   Serial.begin(9600);
   ELECHOUSE_cc1101.Init();
-  pinMode(lvlpwrPin, OUTPUT);
+  pinMode(PWR_PIN, OUTPUT);
  }
 
 void loop()
 {
   //Ping and condition tank level
-  digitalWrite(lvlpwrPin, HIGH);
+    Serial.println("Powering up level sensor");
+  digitalWrite(PWR_PIN, HIGH);
+    Serial.println("Waiting for sensor to stabilise");
   delay(1000);
-  int uS = sonar.ping_median(30);
-  battv=readVcc();  
-  digitalWrite(lvlpwrPin, LOW);
+    Serial.println("Sensor warmup complete, reading value....");
+  uS = sonar.ping_median(30);
+    Serial.print("Sensor value is ");
+    Serial.print(uS);
+    Serial.println("uS.")
+  //Read battery volts straight after ping to see if there is any voltage drop
+    Serial.println("Reading Battery Volts....");
+  battv=readVcc();
+    Serial.print("Battery Volts is ");
+    Serial.print(battv);
+    Serial.println("mV.");
+    Serial.println("Switching level sensor off.");
+  digitalWrite(PWR_PIN, LOW);
   
-  float dist = uS / US_ROUNDTRIP_CM;
-  float lvlpf = (float(TANK_HEIGHT) - dist)) / float(TANK_HEIGHT - MIN_DISTANCE) * 100.0;
+  long dist = (float(uS) / float(US_ROUNDTRIP_CM)) * 100.0;
+  int lvlpf = (float(TANK_HEIGHT) - dist)) / float(TANK_HEIGHT - MIN_DISTANCE) * 100.0;
 
   if (lvlpf < 0.0) {
     lvlpf = 0.0;
@@ -50,15 +63,9 @@ void loop()
   }
   
   byte lvlp = lvlpf; 
-  
-  Serial.print(lvlp);
-  Serial.print(' ');
-  Serial.print(highByte(battv));
-  Serial.print(' ');
-  Serial.println(lowByte(battv));
-  
+
   //Map data to array to be transmitted
-  TX_buffer[0]=i;
+  TX_buffer[0]=10;
   TX_buffer[1]=highByte(int(dist));
   TX_buffer[2]=lowByte(int(dist));
   TX_buffer[3]=lvlp;
@@ -67,8 +74,6 @@ void loop()
   
   //Send data
   ELECHOUSE_cc1101.SendData(TX_buffer,size);
-  
-  i++;
   
   delay(1000);
   
