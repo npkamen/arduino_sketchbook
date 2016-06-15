@@ -5,6 +5,7 @@
   Serial.begin(9600);
   ELECHOUSE_cc1101.Init();
   ELECHOUSE_cc1101.SetReceive();
+  attachInterrupt(0,ELECHOUSE_CC1101_RevData,FALLING);
 }
 
 byte RX_buffer[61]={0};
