@@ -1,5 +1,5 @@
-#include <ELECHOUSE_CC1101.h>
-#include <NewPing.h>
+#include <ELECHOUSE_CC1101.h> // Data radio library
+#include <NewPing.h> // Ultrasonic sensor library
 #include <JeeLib.h> // Low power functions library
 
 //Set up ultrasonic connection details
@@ -16,21 +16,79 @@
 #define TX_SIZE 61
 #define TX_ADDR 10
 byte TX_buffer[TX_SIZE]={0};
+long lastTransmit;
+
+//Set up receive parameters
+#define RX_SIZE 61
+byte RX_buffer[RX_SIZE]={0};
+byte rx_size,rx_i;
+
+//Other misc parameters
+byte bTransmitLevel;
+byte bSleepExpired;
 
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
 
 ISR(WDT_vect) { Sleepy::watchdogEvent(); } // Setup the watchdog
 
 
-void setup()
-{
+void setup() {
   Serial.begin(9600);
   ELECHOUSE_cc1101.Init();
   pinMode(PWR_PIN, OUTPUT);
+  attachInterrupt(0,ELECHOUSE_CC1101_RevData,FALLING);
+  lastTransmit = millis()
  }
 
-void loop()
-{
+void loop() {
+  //Snapshot current time to be re-used during loop cycle
+  long currentTime = millis();
+  
+  //Check for received message and map data to relevant locations
+  if (RX_buffer[0] <> 0) {
+    Serial.print("Message received from node ");
+    Serial.print(RX_buffer[0]);
+    Serial.println(".");
+    
+    if (RX_buffer[0] = 1) { //Message received from base receiver
+      RX_buffer[0] = 0;
+      
+      if (bitRead(RX_buffer[1],0)) { //Check for refresh command
+        Serial.println("Refresh command received")
+        bTransmitLevel = 1;
+      }
+      
+      
+    }
+  }
+  
+  if (bTransmitLevel || (bSleepExpired = 1) {
+    sleep_pwron = 0;
+    bTransmitLevel = 0;
+    //Read tank level and voltage
+    tankLevel()
+    
+    //Map data to array to be transmitted
+    TX_buffer[0]=TX_ADDR;
+    TX_buffer[1]=highByte(dist);
+    TX_buffer[2]=lowByte(dist);
+    TX_buffer[3]=highByte(lvlp);
+    TX_buffer[4]=lowByte(lvlp);
+    TX_buffer[5]=highByte(battv);
+    TX_buffer[6]=lowByte(battv);
+   
+    //Transmit data
+    ELECHOUSE_cc1101.SendData(TX_buffer,TX_SIZE);
+    
+    //Update last transmission time
+    lastTransmit = currentTime;
+  }
+
+  sleep_pwron=Sleepy::loseSomeTime(60000);  //Wait for 60s before re-sampling and sending again
+
+}
+
+void tankLevel() {
   //Ping and condition tank level
     Serial.println("Powering up level sensor");
   digitalWrite(PWR_PIN, HIGH);
@@ -65,21 +123,6 @@ void loop()
   else if (lvlp > 10000) {
     lvlp = 10000;
   }
-
-  //Map data to array to be transmitted
-  TX_buffer[0]=TX_ADDR;
-  TX_buffer[1]=highByte(dist);
-  TX_buffer[2]=lowByte(dist);
-  TX_buffer[3]=highByte(lvlp);
-  TX_buffer[4]=lowByte(lvlp);
-  TX_buffer[5]=highByte(battv);
-  TX_buffer[6]=lowByte(battv);
-  
-  //Send data
-  ELECHOUSE_cc1101.SendData(TX_buffer,TX_SIZE);
-  
-  //Wait for 60s before re-sampling and sending again
-  Sleepy::loseSomeTime(60000);
 }
 
 long readVcc() {
@@ -106,4 +149,17 @@ long readVcc() {
 
   result = 1125300L / result; // Calculate Vcc (in mV); 1125300 = 1.1*1023*1000
   return result; // Vcc in millivolts
+}
+
+void ELECHOUSE_CC1101_RevData()
+{
+  rx_size=ELECHOUSE_cc1101.ReceiveData(RX_buffer);
+  Serial.print("New incoming message received: ");
+  for(rx_i=0;rx_i<rx_size;rx_i++)
+  {
+    Serial.print(RX_buffer[i],DEC);
+    Serial.print(' ',BYTE);
+  }
+  Serial.println("");
+  ELECHOUSE_cc1101.SetReceive();
 }
